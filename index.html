@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Horloge « atomique » – AMBREA (Europe/Paris)</title>
+  <style>
+    :root{--bg:#0f172a;--card:#111827;--muted:#94a3b8;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444;--ink:#e5e7eb}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif;background:linear-gradient(160deg,#0b1223,#0f172a 60%);color:var(--ink)}
+    .wrap{max-width:980px;margin:28px auto;padding:16px}
+    h1{font-size:clamp(22px,2.6vw,32px);margin:0 0 8px 0}
+    .sub{color:var(--muted);margin-bottom:20px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+    .card{background:rgba(17,24,39,.75);backdrop-filter: blur(6px);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:16px;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    .big{font-size:clamp(24px,4.4vw,44px);letter-spacing:.5px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0}
+    .pill{padding:2px 8px;border-radius:999px;font-size:12px}
+    .ok{background:#0c3d21;color:#b7f4c7;border:1px solid #14532d}
+    .warn{background:#3b2a09;color:#fde68a;border:1px solid #92400e}
+    .err{background:#3b0b0b;color:#fecaca;border:1px solid #991b1b}
+    .tbl{width:100%;border-collapse:collapse}
+    .tbl th,.tbl td{border-bottom:1px solid rgba(255,255,255,.08);padding:8px;text-align:left;font-size:14px}
+    .tbl th{color:#cbd5e1}
+    .muted{color:var(--muted)}
+    button{background:#1f2937;color:#e5e7eb;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer}
+    button:hover{background:#111827}
+    .footer{opacity:.7;margin-top:14px;font-size:12px}
+    .kbd{border:1px solid rgba(255,255,255,.2);border-bottom-width:3px;padding:2px 6px;border-radius:6px}
+    .small{font-size:12px}
+    #tests-list{margin:8px 0 0 18px}
+    .pass{color:#86efac}
+    .fail{color:#fca5a5}
+    .input{background:#0b1223;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px 10px;color:var(--ink);}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Horloge « atomique » miroir – Europe/Paris</h1>
+    <div class="sub">Sources locales CORS : <b>timeapi.io</b>, <b>Google Time (via proxy)</b>, <b>WorldTimeAPI</b>. V2 serveur FR : <b>quelle-heure-est-il.com</b>, <b>time.is</b>, <b>timeanddate</b>. Seuils : Δ≤4 s ; cohérence sources ≤2 s (Avert. jusqu’à 4 s).</div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="row"><div>Heure système (navigateur)</div><div class="pill ok" id="sys-status">OK</div></div>
+        <div class="mono big" id="local-time">--:--:--</div>
+        <div class="muted small">Fuseau déduit: <span id="tz"></span></div>
+      </div>
+      <div class="card">
+        <div class="row"><div>Heure « réseau » (médiane corrigée RTT)</div><div class="pill" id="net-status">…</div></div>
+        <div class="mono big" id="net-time">--:--:--</div>
+        <div class="muted small">Delta (réseau − système): <span id="delta"></span> sec</div>
+      </div>
+      <div class="card">
+        <div class="row"><div>Contrôle qualité</div><div class="pill" id="qc-pill">…</div></div>
+        <div class="small">Sources interrogées et deltas:</div>
+        <table class="tbl mono small" id="sources-table">
+          <thead><tr><th>Source</th><th>Heure</th><th>Δ sec</th><th>RTT ms</th><th>Statut</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="footer">Seuils : Δ≤4 s (OK) • 4–15 s (Avert.) • >15 s (Erreur). Cohérence sources : ≤2 s (OK) • 2–4 s (Avert.) • >4 s (Erreur).</div>
+      </div>
+    </div>
+
+    <!-- Mode/serveur V2 -->
+    <div class="card" style="margin-top:12px">
+      <div class="row"><div style="font-weight:700">Mode d'obtention</div><div class="pill" id="mode-pill">Local</div></div>
+      <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
+        <label class="small"><input type="checkbox" id="srv-enabled"> Utiliser serveur si dispo</label>
+        <input id="srv-url" class="mono small input" style="min-width:320px;flex:1" value="http://127.0.0.1:8787/api/time?tz=Europe/Paris" />
+        <button id="try-server">Essayer serveur (S)</button>
+      </div>
+      <div class="footer small">Le serveur renvoie une heure agrégée & signée (HMAC). Si indisponible, la page retombe en mode local.</div>
+    </div>
+
+    <div class="row" style="margin-top:14px;gap:8px">
+      <button id="refresh">Rafraîchir (R)</button>
+      <button id="snapshot">Snapshot #SG&gt;</button>
+      <span class="muted small">Astuce: <span class="kbd">R</span> relance • <span class="kbd">S</span> teste le serveur.</span>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div style="font-weight:700;margin-bottom:6px">Sortie Snapshot #SG&gt;</div>
+      <pre class="mono small" id="sgout">—</pre>
+      <div class="footer">Format: Heure officielle, Date officielle, Horodatage ISO assistant, Delta en secondes, ⚠ si désalignement &gt; 120 s.</div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="row"><div style="font-weight:700">Tests automatisés</div><div class="pill" id="tests-status">…</div></div>
+      <ul id="tests-list" class="mono small"></ul>
+      <div class="row" style="gap:8px;margin-top:8px"><button id="run-tests">Lancer les tests</button><span class="muted small">Vérifie l’exécution locale &amp; le mode dégradé.</span></div>
+    </div>
+
+    <div class="footer">V1 navigateur (démo). V2 proposera une fonction serveur FR pour corriger CORS et signer l’heure officielle.</div>
+  </div>
+
+  <script>
+    // ===== Constantes =====
+    const DELTA_OK = 4;      // secondes (OK vs. système)
+    const DELTA_WARN = 15;   // secondes (Avert. vs. système)
+    const SPREAD_OK = 2;     // secondes (écart max entre sources)
+    const SPREAD_WARN = 4;   // secondes (écart max entre sources pour Avert.)
+    const ERR_THRESH = 120;  // secondes (alerte)
+
+    const LS_URL_KEY = 'SG_SRV_URL';
+    const LS_EN_KEY  = 'SG_SRV_ENABLED';
+
+    // ===== Utilitaires =====
+    const pad = n => String(n).padStart(2,'0');
+    const fmtTime = d => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    const fmtDate = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+    const setPill = (el, status) => {
+      if(!el) return;
+      el.classList.remove('ok','warn','err');
+      if(status==='OK'){ el.classList.add('ok'); el.textContent='OK'; }
+      else if(status==='WARN'){ el.classList.add('warn'); el.textContent='Avert.'; }
+      else if(status==='ERR'){ el.classList.add('err'); el.textContent='Erreur'; }
+      else { el.textContent='…'; }
+    };
+
+    const setModeLabel = (label, cls) => {
+      const el = document.getElementById('mode-pill');
+      if(!el) return;
+      el.classList.remove('ok','warn','err');
+      if(cls) el.classList.add(cls);
+      el.textContent = label;
+    };
+
+    // ===== Sources compatibles CORS en local =====
+    // Ordre souhaité : 1) timeapi.io, 2) Google Time (proxy), 3) WorldTimeAPI
+    // ⚠️ NOTE: La source "Google Time (via proxy)" ne sera disponible qu'après déploiement Pages Functions (route /api/google-time). En local/canvas, la ligne peut rester en ERR.
+    const SOURCES = [
+      {
+        name: 'timeapi.io (Paris)',
+        url: 'https://timeapi.io/api/Time/current/zone?timeZone=Europe/Paris',
+        parse: (json) => {
+          let s = json.dateTime || json.date || json.currentLocalTime || '';
+          let d = new Date(s);
+          if(isNaN(d)){
+            const i = s.indexOf('.');
+            if(i>=0){
+              const after = s.slice(i+1);
+              const z = after.indexOf('Z');
+              const p = after.indexOf('+');
+              const m = after.indexOf('-');
+              const idxs = [z,p,m].filter(x=>x>=0).map(x=>i+1+x);
+              const tzPos = idxs.length? Math.min(...idxs) : s.length;
+              s = s.slice(0, i+4) + s.slice(tzPos); // garde 3 décimales, conserve le fuseau
+            }
+            d = new Date(s);
+          }
+          return d;
+        },
+        adjust: () => 0
+      },
+      // ⚠️ Nécessite Cloudflare Pages Functions : /api/google-time
+      {
+        name: 'Google Time (via proxy)',
+        url: '/api/google-time',
+        requireJson: true,
+        parse: (json) => new Date(json.iso),
+        adjust: () => 0
+      },
+      {
+        name: 'WorldTimeAPI (Paris)',
+        url: 'https://worldtimeapi.org/api/timezone/Europe/Paris',
+        parse: (json) => new Date(json.utc_datetime || json.datetime),
+        adjust: () => 0
+      }
+    ];
+
+    function rowHTML({name,time,delta,latency,ok}){
+      const lat = (typeof latency === 'number' && isFinite(latency)) ? latency.toFixed(1) : '—';
+      const del = (typeof delta === 'number' && isFinite(delta)) ? delta.toFixed(3) : '—';
+      return `<tr><td>${name}</td><td>${time?fmtTime(time):'—'}</td><td>${del}</td><td>${lat}</td><td>${ok?'OK':'—'}</td></tr>`;
+    }
+
+    async function getNetworkTimeFromSource(src){
+      const t0 = performance.now();
+      try{
+        const res = await fetch(src.url, {cache:'no-store'});
+        const t1 = performance.now();
+        if(!res.ok) throw new Error('HTTP '+res.status);
+
+        let baseDate;
+        const ct = (res.headers.get('content-type')||'').toLowerCase();
+        const isJSON = ct.includes('application/json');
+        if (src.requireJson && !isJSON) throw new Error('Not JSON');
+
+        if(src.binary){
+          const buffer = await res.arrayBuffer();
+          const base = src.parseBinary(buffer);
+          baseDate = base;
+        } else {
+          const data = isJSON ? await res.json() : await res.text();
+          if(isJSON){
+            const base = src.parse(data);
+            baseDate = new Date(base.getTime() + ((src.adjust?src.adjust(data):0)*1000));
+          } else {
+            const m = String(data).match(/(\d{4}-\d{2}-\d{2}[^\d]?\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?)/);
+            baseDate = m ? new Date(m[1]) : new Date('invalid');
+          }
+        }
+        if(!(baseDate instanceof Date) || isNaN(baseDate.getTime())) { throw new Error('Invalid date from '+src.name); }
+        const rtt = t1 - t0;
+        const corrected = new Date(baseDate.getTime() + rtt/2);
+        return { ok:true, name:src.name, time: corrected, latency:rtt };
+      }catch(e){
+        return { ok:false, name:src.name, time:null, latency:NaN };
+      }
+    }
+
+    // ===== Mode SERVEUR V2 =====
+    async function fetchServerTime(url, timeoutMs=1200){
+      const ctrl = new AbortController();
+      const id = setTimeout(()=>ctrl.abort('timeout'), timeoutMs);
+      try{
+        const res = await fetch(url, { signal: ctrl.signal, cache:'no-store' });
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        const j = await res.json();
+        if(!j || !j.netTimeISO){ throw new Error('payload invalide'); }
+        const epoch = Date.parse(j.netTimeISO);
+        if(!isFinite(epoch)) throw new Error('parse netTimeISO');
+        return { ok:true, epochMs: epoch, spreadSec: j.spreadSec, statusNet: j.statusNet, statusQC: j.statusQC, sources: j.sources||[] };
+      }catch(e){
+        return { ok:false, err: String(e) };
+      }finally{ clearTimeout(id); }
+    }
+
+    function startTick(baseSysMs, baseNetMs){
+      if(window._tick) clearInterval(window._tick);
+      window._tick = setInterval(()=>{
+        const nowMs = Date.now();
+        const now = new Date(nowMs);
+        const netNow = new Date(baseNetMs + (nowMs - baseSysMs));
+        const d = (netNow.getTime() - nowMs)/1000;
+        const localEl = document.getElementById('local-time');
+        const netEl = document.getElementById('net-time');
+        const deltaEl = document.getElementById('delta');
+        if(localEl) localEl.textContent = fmtTime(now);
+        if(netEl) netEl.textContent = fmtTime(netNow);
+        if(deltaEl) deltaEl.textContent = d.toFixed(3);
+      }, 1000);
+    }
+
+    async function measure(serverPreferred){
+      const srvEnabled = serverPreferred ?? (document.getElementById('srv-enabled')?.checked);
+      const srvUrl = (document.getElementById('srv-url')?.value||'').trim() || 'http://127.0.0.1:8787/api/time?tz=Europe/Paris';
+
+      const sysNow = new Date();
+      const localEl = document.getElementById('local-time');
+      const tzEl = document.getElementById('tz');
+      if(localEl) localEl.textContent = fmtTime(sysNow);
+      if(tzEl) tzEl.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      const tbody = document.querySelector('#sources-table tbody');
+      if(tbody) tbody.innerHTML='';
+
+      if(srvEnabled){
+        const s = await fetchServerTime(srvUrl, 1200);
+        if(s.ok){
+          setModeLabel('Serveur', 'ok');
+          (s.sources||[]).forEach(src => {
+            const t = src.tISO ? new Date(src.tISO) : null;
+            const deltaSec = t ? (t.getTime() - sysNow.getTime())/1000 : NaN;
+            if(tbody) tbody.insertAdjacentHTML('beforeend', rowHTML({name:src.name||'srv', time:t, delta:deltaSec, latency:src.rttMs, ok:!!src.ok}));
+          });
+          const netDate = new Date(s.epochMs);
+          const deltaSecMed = (netDate.getTime() - sysNow.getTime())/1000;
+          const sev = x => x==='OK'?0:(x==='WARN'?1:2);
+          const statusDelta = Math.abs(deltaSecMed) <= DELTA_OK ? 'OK' : (Math.abs(deltaSecMed) <= DELTA_WARN ? 'WARN' : 'ERR');
+          const serverStatus = s.statusNet || 'WARN';
+          const finalStatus = sev(serverStatus) > sev(statusDelta) ? serverStatus : statusDelta;
+          setPill(document.getElementById('net-status'), finalStatus);
+          setPill(document.getElementById('qc-pill'), finalStatus);
+          const netTimeEl = document.getElementById('net-time');
+          const deltaEl = document.getElementById('delta');
+          if(netTimeEl) netTimeEl.textContent = fmtTime(netDate);
+          if(deltaEl) deltaEl.textContent = deltaSecMed.toFixed(3);
+          const baseSysMs = sysNow.getTime();
+          const baseNetMs = netDate.getTime();
+          startTick(baseSysMs, baseNetMs);
+          window.__lastMeasurement = { sysNow, netDate, deltaSecMed, degraded:false, baseSysMs, baseNetMs, mode:'SERVER' };
+          return;
+        }
+      }
+
+      setModeLabel(srvEnabled ? 'Local (fallback)' : 'Local', srvEnabled ? 'warn' : '');
+
+      const results = await Promise.all(SOURCES.map(getNetworkTimeFromSource));
+      const oks = results.filter(r=>r.ok);
+      oks.forEach(r=>{
+        const deltaSec = (r.time.getTime() - sysNow.getTime())/1000;
+        if(tbody) tbody.insertAdjacentHTML('beforeend', rowHTML({name:r.name, time:r.time, delta:deltaSec, latency:r.latency, ok:true}));
+      });
+      results.filter(r=>!r.ok).forEach(r=>{
+        if(tbody) tbody.insertAdjacentHTML('beforeend', rowHTML({name:r.name, time:null, delta:NaN, latency:NaN, ok:false}));
+      });
+
+      const netTimeEl = document.getElementById('net-time');
+      const deltaEl = document.getElementById('delta');
+      const qcPill = document.getElementById('qc-pill');
+      const netPill = document.getElementById('net-status');
+
+      if(oks.length === 0){
+        setPill(netPill,'WARN');
+        setPill(qcPill,'WARN');
+        if(netTimeEl) netTimeEl.textContent = fmtTime(sysNow);
+        if(deltaEl) deltaEl.textContent = (0).toFixed(3);
+        const baseSysMs = sysNow.getTime();
+        const baseNetMs = sysNow.getTime();
+        window.__lastMeasurement = { sysNow, netDate: sysNow, deltaSecMed: 0, degraded: true, baseSysMs, baseNetMs, mode:'DEGRADE' };
+        startTick(baseSysMs, baseNetMs);
+        if(tbody){
+          tbody.innerHTML = '';
+          tbody.insertAdjacentHTML('beforeend', rowHTML({name:'Aucune source réseau disponible (CORS)', time:null, delta:NaN, latency:NaN, ok:false}));
+        }
+        return;
+      }
+
+      const stamps = oks.map(r=>r.time.getTime()).sort((a,b)=>a-b);
+      const median = stamps.length%2 ? stamps[(stamps.length-1)/2] : (stamps[stamps.length/2-1]+stamps[stamps.length/2])/2;
+      const netDate = new Date(median);
+      const deltaSecMed = (netDate.getTime() - sysNow.getTime())/1000;
+      if(netTimeEl) netTimeEl.textContent = fmtTime(netDate);
+      if(deltaEl) deltaEl.textContent = deltaSecMed.toFixed(3);
+      const spreadSec = (stamps[stamps.length-1] - stamps[0]) / 1000;
+      const sevNum = s=>s==='OK'?0:(s==='WARN'?1:2);
+      const statusDelta = Math.abs(deltaSecMed) <= DELTA_OK ? 'OK' : (Math.abs(deltaSecMed) <= DELTA_WARN ? 'WARN' : 'ERR');
+      const statusSpread = spreadSec <= SPREAD_OK ? 'OK' : (spreadSec <= SPREAD_WARN ? 'WARN' : 'ERR');
+      const finalStatus = sevNum(statusDelta) > sevNum(statusSpread) ? statusDelta : statusSpread;
+      setPill(netPill, finalStatus);
+      setPill(qcPill, finalStatus);
+
+      const baseSysMs = sysNow.getTime();
+      const baseNetMs = netDate.getTime();
+      startTick(baseSysMs, baseNetMs);
+      window.__lastMeasurement = { sysNow, netDate, deltaSecMed, degraded:false, baseSysMs, baseNetMs, mode:'LOCAL' };
+    }
+
+    function doSnapshot(){
+      const out = document.getElementById('sgout');
+      if(!window.__lastMeasurement){ if(out) out.textContent = 'Mesure non effectuée.'; return; }
+      const { degraded, baseSysMs, baseNetMs, netDate, mode } = window.__lastMeasurement || {};
+      const nowMs = Date.now();
+      const effectiveNet = (typeof baseSysMs === 'number' && typeof baseNetMs === 'number')
+        ? new Date(baseNetMs + (nowMs - baseSysMs))
+        : (netDate || new Date(nowMs));
+      const dNow = (effectiveNet.getTime() - nowMs)/1000;
+      const flag = Math.abs(dNow) > ERR_THRESH ? ' ⚠' : '';
+      const line = [
+        `Heure officielle: ${fmtTime(effectiveNet)} (Europe/Paris)`,
+        `Date officielle: ${fmtDate(effectiveNet)}`,
+        `Horodatage ISO assistant: ${new Date(nowMs).toISOString()}`,
+        `Delta secondes (réseau - système): ${dNow.toFixed(3)}`,
+        `Seuil >${ERR_THRESH}s: ${Math.abs(dNow)>ERR_THRESH}${flag}`,
+        mode?`Mode: ${mode}`:(degraded ? 'Mode: DEGRADE' : 'Mode: NORMAL')
+      ].join('\n');
+      if(out) out.textContent = line;
+    }
+
+    // ===== Tests =====
+    async function runTests(){
+      const list = document.getElementById('tests-list');
+      const status = document.getElementById('tests-status');
+      if(list) list.innerHTML='';
+      let failures = 0;
+      const add = (ok, name, detail='') => {
+        const li = document.createElement('li');
+        li.className = ok ? 'pass' : 'fail';
+        li.textContent = (ok?'✓ ':'✗ ') + name + (detail?` — ${detail}`:'');
+        if(list) list.appendChild(li);
+        if(!ok) failures++;
+      };
+      try{
+        add(typeof measure === 'function', 'measure() est définie');
+        const p = measure(false);
+        add(p instanceof Promise, 'measure() retourne une Promise');
+        await p;
+        add(!!window.__lastMeasurement, 'window.__lastMeasurement défini après measure()');
+        doSnapshot();
+        const sg = (document.getElementById('sgout')?.textContent)||'';
+        add(sg.length>1 && sg.includes('Heure officielle'), 'doSnapshot() produit une sortie');
+        const before = (document.getElementById('net-time')?.textContent)||'';
+        await new Promise(r=>setTimeout(r, 1200));
+        const after = (document.getElementById('net-time')?.textContent)||'';
+        add(before !== after, 'Heure réseau avance entre deux ticks');
+        const tmp = rowHTML({name:'TEST', time:new Date(), delta:0.1234, latency:5.6, ok:true});
+        add(/<tr>/.test(tmp) && tmp.includes('TEST') && tmp.includes('OK'), 'rowHTML() rend un TR valide');
+        const pill = document.createElement('div');
+        setPill(pill,'OK');
+        add(pill.classList.contains('ok') && pill.textContent==='OK', 'setPill() applique OK');
+      }catch(e){
+        add(false, 'Exception pendant les tests', String(e));
+      }
+      setPill(status, failures? 'ERR' : 'OK');
+    }
+
+    // ===== Événements =====
+    document.getElementById('refresh').addEventListener('click', ()=>measure());
+    document.getElementById('snapshot').addEventListener('click', doSnapshot);
+    document.getElementById('run-tests').addEventListener('click', runTests);
+    document.getElementById('try-server').addEventListener('click', ()=>measure(true));
+    document.getElementById('srv-url').addEventListener('change', (e)=>{ try{ localStorage.setItem(LS_URL_KEY, e.target.value); }catch{} });
+    document.getElementById('srv-enabled').addEventListener('change', (e)=>{ try{ localStorage.setItem(LS_EN_KEY, e.target.checked?'1':'0'); }catch{} });
+    window.addEventListener('keydown', (e)=>{ if(!e.key) return; const k=e.key.toLowerCase(); if(k==='r') measure(); if(k==='s') measure(true); });
+
+    // ===== Démarrage auto =====
+    window.addEventListener('DOMContentLoaded', ()=>{
+      try{
+        const savedUrl = localStorage.getItem(LS_URL_KEY);
+        const savedEn = localStorage.getItem(LS_EN_KEY);
+        if(savedUrl) document.getElementById('srv-url').value = savedUrl;
+        if(savedEn) document.getElementById('srv-enabled').checked = savedEn==='1';
+      }catch{}
+      measure();
+    });
+  </script>
+</body>
+</html>
