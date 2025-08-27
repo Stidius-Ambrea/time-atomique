@@ -1,6 +1,6 @@
 export async function onRequest(context) {
   const now = new Date();
-  
+
   // Conversion Europe/Paris
   const options = {
     timeZone: "Europe/Paris",
