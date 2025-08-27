@@ -1,0 +1,33 @@
+name: Update Ambrea Time API
+
+on:
+  schedule:
+    - cron: "*/1 * * * *" # exécution toutes les minutes (GitHub ne supporte pas 10s, on contournera)
+  workflow_dispatch:
+
+jobs:
+  update-time:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Récupération du dépôt
+      uses: actions/checkout@v3
+
+    - name: Installation de Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+
+    - name: Installer les dépendances
+      run: npm install node-fetch@3
+
+    - name: Mettre à jour time.json
+      run: node update-time.js
+
+    - name: Commit et push
+      run: |
+        git config --global user.name "Ambrea Bot"
+        git config --global user.email "bot@ambrea.dev"
+        git add time.json
+        git commit -m "Mise à jour automatique de l'heure"
+        git push
