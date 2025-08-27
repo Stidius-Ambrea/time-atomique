@@ -37,7 +37,7 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>Horloge « atomique » miroir – Europe/Paris</h1>
+    <h1>TIME ATOMIQUE – Europe/Paris</h1>
     <div class="sub">Sources locales CORS : <b>timeapi.io</b>, <b>Google Time (via proxy)</b>, <b>WorldTimeAPI</b>. V2 serveur FR : <b>quelle-heure-est-il.com</b>, <b>time.is</b>, <b>timeanddate</b>. Seuils : Δ≤4 s ; cohérence sources ≤2 s (Avert. jusqu’à 4 s).</div>
 
     <div class="grid">
@@ -128,8 +128,8 @@
     };
 
     // ===== Sources compatibles CORS en local =====
-    // Ordre souhaité : 1) timeapi.io, 2) Google Time (proxy), 3) WorldTimeAPI
-    // ⚠️ NOTE: La source "Google Time (via proxy)" ne sera disponible qu'après déploiement Pages Functions (route /api/google-time). En local/canvas, la ligne peut rester en ERR.
+    // Ordre : 1) timeapi.io, 2) Google Time (proxy), 3) WorldTimeAPI
+    // ⚠️ NOTE: Google proxy dispo seulement après déploiement Pages Functions (route /api/google-time).
     const SOURCES = [
       {
         name: 'timeapi.io (Paris)',
