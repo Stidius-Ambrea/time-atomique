@@ -2,32 +2,42 @@ name: Update Ambrea Time API
 
 on:
   schedule:
-    - cron: "*/1 * * * *" # exécution toutes les minutes (GitHub ne supporte pas 10s, on contournera)
+    - cron: "*/5 * * * *"   # toutes les 5 minutes (UTC)
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/update-time.yml"
+
+permissions:
+  contents: write
 
 jobs:
   update-time:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 3
     steps:
-    - name: Récupération du dépôt
-      uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Installation de Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    - name: Installer les dépendances
-      run: npm install node-fetch@3
+      - name: Install deps
+        run: |
+          npm init -y
+          npm install node-fetch@2
 
-    - name: Mettre à jour time.json
-      run: node update-time.js
+      - name: Update time.json
+        run: |
+          mkdir -p scripts
+          node scripts/update-time.js
 
-    - name: Commit et push
-      run: |
-        git config --global user.name "Ambrea Bot"
-        git config --global user.email "bot@ambrea.dev"
-        git add time.json
-        git commit -m "Mise à jour automatique de l'heure"
-        git push
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/time.json
+          git commit -m "chore(time): update time.json [skip ci]" || exit 0
+          git push
