@@ -1,8 +1,8 @@
 {
   "tz": "Europe/Paris",
-  "avg_utc_iso": "2025-10-19T15:59:05.000Z",
-  "now_iso": "2025-10-19T17:59:05+02:00",
-  "now_unix_ms": 1760889545000,
+  "avg_utc_iso": "2025-10-19T16:30:36.000Z",
+  "now_iso": "2025-10-19T18:30:36+02:00",
+  "now_unix_ms": 1760891436000,
   "sources": [
     {
       "name": "quelle-heure-est-il.com",
@@ -13,16 +13,16 @@
     {
       "name": "time.is",
       "url": "https://time.is/Paris",
-      "date": "Sun, 19 Oct 2025 15:59:04 GMT",
-      "unix_ms": 1760889544000
+      "date": "Sun, 19 Oct 2025 16:30:36 GMT",
+      "unix_ms": 1760891436000
     },
     {
       "name": "timeanddate.com",
       "url": "https://www.timeanddate.com/worldclock/france/paris",
-      "date": "Sun, 19 Oct 2025 15:59:06 GMT",
-      "unix_ms": 1760889546000
+      "date": "Sun, 19 Oct 2025 16:30:36 GMT",
+      "unix_ms": 1760891436000
     }
   ],
-  "delta_between_sources_ms": 1000,
+  "delta_between_sources_ms": 0,
   "status": "ok"
 }
