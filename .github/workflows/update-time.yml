@@ -34,10 +34,15 @@ jobs:
           mkdir -p scripts
           node scripts/update-time.js
 
-      - name: Commit & push
+       - name: Commit & push
         run: |
+          set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/time.json
-          git commit -m "chore(time): update time.json [skip ci]" || exit 0
+          git commit -m "chore(time): update time.json [skip ci]" || true
+          # récupère les derniers commits distants et rebase si besoin
+          git fetch origin main
+          git pull --rebase origin main || true
           git push
+
