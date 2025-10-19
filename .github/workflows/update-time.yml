@@ -8,6 +8,11 @@ on:
 permissions:
   contents: write
 
+# Evite les exécutions concurrentes qui se marchent dessus
+concurrency:
+  group: ambrea-time
+  cancel-in-progress: true
+
 jobs:
   update-time:
     runs-on: ubuntu-latest
@@ -15,6 +20,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # Se cale sur la dernière version distante AVANT de générer le fichier
+      - name: Sync with remote main
+        run: |
+          git fetch origin main
+          git checkout main
+          git pull --rebase origin main || true
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -35,9 +47,10 @@ jobs:
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          git checkout main
-          git pull --rebase origin main || true
           git add public/time.json
           git commit -m "chore(time): update time.json [skip ci]" || true
+          # Rebase une dernière fois si quelqu'un a poussé entre temps
+          git fetch origin main
+          git pull --rebase origin main || true
+          # Push avec le token Actions (écritures autorisées)
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
