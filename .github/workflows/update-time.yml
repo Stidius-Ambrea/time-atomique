@@ -35,8 +35,9 @@ jobs:
           set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          git pull --rebase origin main || true
           git add public/time.json
           git commit -m "chore(time): update time.json [skip ci]" || true
-          git fetch origin main
-          git pull --rebase origin main || true
-          git push
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
