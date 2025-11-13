@@ -1,8 +1,8 @@
 {
   "tz": "Europe/Paris",
-  "avg_utc_iso": "2025-11-13T08:35:37.250Z",
-  "now_iso": "2025-11-13T09:35:37+01:00",
-  "now_unix_ms": 1763022937250,
+  "avg_utc_iso": "2025-11-13T08:55:01.250Z",
+  "now_iso": "2025-11-13T09:55:01+01:00",
+  "now_unix_ms": 1763024101250,
   "sources": [
     {
       "name": "quelle-heure-est-il.com",
@@ -13,26 +13,26 @@
     {
       "name": "time.is",
       "url": "https://time.is/Paris",
-      "date": "Thu, 13 Nov 2025 08:35:37 GMT",
-      "unix_ms": 1763022937000
+      "date": "Thu, 13 Nov 2025 08:55:01 GMT",
+      "unix_ms": 1763024101000
     },
     {
       "name": "timeanddate.com",
       "url": "https://www.timeanddate.com/worldclock/france/paris",
-      "date": "Thu, 13 Nov 2025 08:35:37 GMT",
-      "unix_ms": 1763022937000
+      "date": "Thu, 13 Nov 2025 08:55:01 GMT",
+      "unix_ms": 1763024101000
     },
     {
       "name": "google.fr",
       "url": "https://www.google.fr",
-      "date": "Thu, 13 Nov 2025 08:35:37 GMT",
-      "unix_ms": 1763022937000
+      "date": "Thu, 13 Nov 2025 08:55:01 GMT",
+      "unix_ms": 1763024101000
     },
     {
       "name": "cloudflare.com",
       "url": "https://www.cloudflare.com",
-      "date": "Thu, 13 Nov 2025 08:35:38 GMT",
-      "unix_ms": 1763022938000
+      "date": "Thu, 13 Nov 2025 08:55:02 GMT",
+      "unix_ms": 1763024102000
     }
   ],
   "delta_between_sources_ms": 750,
