@@ -1,8 +1,8 @@
 {
   "tz": "Europe/Paris",
-  "avg_utc_iso": "2026-02-22T11:29:48.000Z",
-  "now_iso": "2026-02-22T12:29:48+01:00",
-  "now_unix_ms": 1771759788000,
+  "avg_utc_iso": "2026-02-22T11:48:31.000Z",
+  "now_iso": "2026-02-22T12:48:31+01:00",
+  "now_unix_ms": 1771760911000,
   "sources": [
     {
       "name": "quelle-heure-est-il.com",
@@ -13,26 +13,26 @@
     {
       "name": "time.is",
       "url": "https://time.is/Paris",
-      "date": "Sun, 22 Feb 2026 11:29:48 GMT",
-      "unix_ms": 1771759788000
+      "date": "Sun, 22 Feb 2026 11:48:31 GMT",
+      "unix_ms": 1771760911000
     },
     {
       "name": "timeanddate.com",
       "url": "https://www.timeanddate.com/worldclock/france/paris",
-      "date": "Sun, 22 Feb 2026 11:29:48 GMT",
-      "unix_ms": 1771759788000
+      "date": "Sun, 22 Feb 2026 11:48:31 GMT",
+      "unix_ms": 1771760911000
     },
     {
       "name": "google.fr",
       "url": "https://www.google.fr",
-      "date": "Sun, 22 Feb 2026 11:29:48 GMT",
-      "unix_ms": 1771759788000
+      "date": "Sun, 22 Feb 2026 11:48:31 GMT",
+      "unix_ms": 1771760911000
     },
     {
       "name": "cloudflare.com",
       "url": "https://www.cloudflare.com",
-      "date": "Sun, 22 Feb 2026 11:29:48 GMT",
-      "unix_ms": 1771759788000
+      "date": "Sun, 22 Feb 2026 11:48:31 GMT",
+      "unix_ms": 1771760911000
     }
   ],
   "delta_between_sources_ms": 0,
