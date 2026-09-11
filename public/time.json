@@ -1,8 +1,8 @@
 {
   "tz": "Europe/Paris",
-  "avg_utc_iso": "2026-09-11T20:39:19.750Z",
-  "now_iso": "2026-09-11T22:39:19+02:00",
-  "now_unix_ms": 1789159159750,
+  "avg_utc_iso": "2026-09-11T22:47:46.250Z",
+  "now_iso": "2026-09-12T24:47:46-NaN:NaN",
+  "now_unix_ms": 1789166866250,
   "sources": [
     {
       "name": "quelle-heure-est-il.com",
@@ -13,26 +13,26 @@
     {
       "name": "time.is",
       "url": "https://time.is/Paris",
-      "date": "Fri, 11 Sep 2026 20:39:19 GMT",
-      "unix_ms": 1789159159000
+      "date": "Fri, 11 Sep 2026 22:47:46 GMT",
+      "unix_ms": 1789166866000
     },
     {
       "name": "timeanddate.com",
       "url": "https://www.timeanddate.com/worldclock/france/paris",
-      "date": "Fri, 11 Sep 2026 20:39:20 GMT",
-      "unix_ms": 1789159160000
+      "date": "Fri, 11 Sep 2026 22:47:46 GMT",
+      "unix_ms": 1789166866000
     },
     {
       "name": "google.fr",
       "url": "https://www.google.fr",
-      "date": "Fri, 11 Sep 2026 20:39:20 GMT",
-      "unix_ms": 1789159160000
+      "date": "Fri, 11 Sep 2026 22:47:46 GMT",
+      "unix_ms": 1789166866000
     },
     {
       "name": "cloudflare.com",
       "url": "https://www.cloudflare.com",
-      "date": "Fri, 11 Sep 2026 20:39:20 GMT",
-      "unix_ms": 1789159160000
+      "date": "Fri, 11 Sep 2026 22:47:47 GMT",
+      "unix_ms": 1789166867000
     }
   ],
   "delta_between_sources_ms": 750,
